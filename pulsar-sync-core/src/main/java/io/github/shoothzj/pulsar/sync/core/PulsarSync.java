@@ -21,6 +21,8 @@ package io.github.shoothzj.pulsar.sync.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.admin.PulsarAdminBuilder;
+import org.apache.pulsar.client.api.ClientBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 
@@ -51,13 +53,33 @@ public class PulsarSync {
     }
 
     private PulsarAdmin createPulsarAdminFromConfig(PulsarConfig config) throws PulsarClientException {
-        String httpUrl = String.format("http://%s:%d", config.getBrokerHost(), config.getHttpPort());
-        return PulsarAdmin.builder().serviceHttpUrl(httpUrl).build();
+        String format = config.isEnableTls() ? "https://%s:%d" : "http://%s:%d";
+        String httpUrl = String.format(format, config.getBrokerHost(), config.getHttpPort());
+        PulsarAdminBuilder builder = PulsarAdmin.builder().serviceHttpUrl(httpUrl);
+        if (config.isEnableTls()) {
+            builder.authentication(config.getAuthentication());
+            builder.enableTlsHostnameVerification(config.isEnableTlsHostnameVerification());
+            if (!config.isAllowTlsInsecureConnection()) {
+                builder.tlsTrustStorePath(config.getTlsTrustStorePath());
+                builder.tlsTrustStorePassword(config.getTlsTrustStorePassword());
+            }
+        }
+        return builder.build();
     }
 
     private PulsarClient createPulsarClientFromConfig(PulsarConfig config) throws PulsarClientException {
-        String serviceUrl = String.format("pulsar://%s:%d", config.getBrokerHost(), config.getTcpPort());
-        return PulsarClient.builder().serviceUrl(serviceUrl).build();
+        String format = config.isEnableTls() ? "pulsar+ssl://%s:%d" : "pulsar://%s:%d";
+        String serviceUrl = String.format(format, config.getBrokerHost(), config.getTcpPort());
+        ClientBuilder builder = PulsarClient.builder().serviceUrl(serviceUrl);
+        if (config.isEnableTls()){
+            builder.authentication(config.getAuthentication());
+            builder.enableTlsHostnameVerification(config.isEnableTlsHostnameVerification());
+            if (!config.isAllowTlsInsecureConnection()) {
+                builder.tlsTrustStorePath(config.getTlsTrustStorePath());
+                builder.tlsTrustStorePassword(config.getTlsTrustStorePassword());
+            }
+        }
+        return builder.build();
     }
 
     public void close() {

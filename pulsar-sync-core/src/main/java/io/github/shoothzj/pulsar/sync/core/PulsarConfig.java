@@ -22,6 +22,7 @@ package io.github.shoothzj.pulsar.sync.core;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.pulsar.client.api.Authentication;
 
 @Setter
 @Getter
@@ -33,5 +34,17 @@ public class PulsarConfig {
     private int httpPort;
 
     private int tcpPort;
+
+    private boolean enableTls;
+
+    private Authentication authentication;
+
+    private String tlsTrustStorePath;
+
+    private String tlsTrustStorePassword;
+
+    private boolean allowTlsInsecureConnection;
+
+    private boolean enableTlsHostnameVerification;
 
 }
